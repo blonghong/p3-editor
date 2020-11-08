@@ -171,20 +171,46 @@ class GenEditor(QMainWindow):
         #QtWidgets.QShortcut(Qt.CTRL + Qt.Key_O, self.file_menu).activated.connect(self.button_load_level)
         #QtWidgets.QShortcut(Qt.CTRL + Qt.Key_Alt + Qt.Key_S, self.file_menu).activated.connect(self.button_save_level_as)
 
-        self.file_load_action = QAction("Load", self)
-        self.save_file_action = QAction("Save", self)
-        self.save_file_as_action = QAction("Save As", self)
-        self.save_file_action.setShortcut("Ctrl+S")
+        # File > Load
+        self.file_load_action = QAction("Open Gen File...", self)
         self.file_load_action.setShortcut("Ctrl+O")
-        self.save_file_as_action.setShortcut("Ctrl+Alt+S")
-
         self.file_load_action.triggered.connect(self.button_load_level)
-        self.save_file_action.triggered.connect(self.button_save_level)
-        self.save_file_as_action.triggered.connect(self.button_save_level_as)
-
         self.file_menu.addAction(self.file_load_action)
+
+        # File > Save
+        self.save_file_action = QAction("Save", self)
+        self.save_file_action.setShortcut("Ctrl+S")
+        self.save_file_action.triggered.connect(self.button_save_level)
         self.file_menu.addAction(self.save_file_action)
+
+        # File > Save As
+        self.save_file_as_action = QAction("Save As...", self)
+        self.save_file_as_action.setShortcut("Ctrl+Alt+S")
+        self.save_file_as_action.triggered.connect(self.button_save_level_as)
         self.file_menu.addAction(self.save_file_as_action)
+
+        # Separator
+        self.file_menu.addSeparator()
+        
+        # File > Open Geo OBJ
+        self.file_load_geo_action = QAction("Open Geometry OBJ...", self)
+        self.file_load_geo_action.setShortcut("Ctrl+Shift+O")
+        self.file_load_geo_action.triggered.connect(self.button_load_collision)
+        self.file_menu.addAction(self.file_load_geo_action)
+
+        # File > Open Geo BJMP/SZS
+        self.file_load_geo_bjmp_action = QAction("Open Geometry BJMP/SZS...", self)
+        self.file_load_geo_bjmp_action.setShortcut("Ctrl+Alt+O")
+        self.file_load_geo_bjmp_action.triggered.connect(self.button_load_collision_bjmp)
+        self.file_menu.addAction(self.file_load_geo_bjmp_action)
+
+        
+        
+        
+
+        
+        
+        
 
         self.paths_menu = QMenu(self.menubar)
         self.paths_menu.setTitle("Paths")
@@ -193,14 +219,12 @@ class GenEditor(QMainWindow):
         self.paths_menu.addAction(self.paths_load)
 
         # ------ Collision Menu
-        self.collision_menu = QMenu(self.menubar)
-        self.collision_menu.setTitle("Geometry")
-        self.collision_load_action = QAction("Load .OBJ", self)
-        self.collision_load_action.triggered.connect(self.button_load_collision)
-        self.collision_menu.addAction(self.collision_load_action)
-        self.collision_load_grid_action = QAction("Load BJMP", self)
-        self.collision_load_grid_action.triggered.connect(self.button_load_collision_bjmp)
-        self.collision_menu.addAction(self.collision_load_grid_action)
+        #self.collision_menu = QMenu(self.menubar)
+        #self.collision_menu.setTitle("Geometry")
+        #self.collision_load_action = QAction("Load .OBJ", self)
+        #
+        #self.collision_load_grid_action = QAction("Load BJMP", self)
+        
 
 
         # Misc
@@ -228,7 +252,7 @@ class GenEditor(QMainWindow):
         self.change_to_3dview_action.setShortcut("Ctrl+2")
 
         self.menubar.addAction(self.file_menu.menuAction())
-        self.menubar.addAction(self.collision_menu.menuAction())
+        #self.menubar.addAction(self.collision_menu.menuAction())
         self.menubar.addAction(self.paths_menu.menuAction())
         self.menubar.addAction(self.misc_menu.menuAction())
         self.setMenuBar(self.menubar)
@@ -353,14 +377,17 @@ class GenEditor(QMainWindow):
         filepath, choosentype = QFileDialog.getOpenFileName(
             self, "Open File",
             self.pathsconfig["gen"],
-            "Generator files (*.txt);;Archived files (*.arc, *.szs);;All files (*)")
+                "Supported files (*.txt;*.arc;*.szs);;" + 
+                "Generator files (*.txt);;" + 
+                "Archived files (*.arc;*.szs);;" + 
+                "All files (*)")
 
         if filepath:
             print("Resetting editor")
             self.reset()
             print("Reset done")
             print("Chosen file type:", choosentype)
-            if choosentype == "Archived files (*.arc, *.szs)" or filepath.endswith(".szs") or filepath.endswith(".arc"):
+            if choosentype == "Archived files (*.arc;*.szs)" or filepath.endswith(".szs") or filepath.endswith(".arc"):
                 with open(filepath, "rb") as f:
                     try:
                         self.loaded_archive = SARCArchive.from_file(f)
@@ -470,9 +497,9 @@ class GenEditor(QMainWindow):
         filepath, choosentype = QFileDialog.getSaveFileName(
             self, "Save File",
             self.pathsconfig["gen"],
-            "Generator files (*.txt);;Archived files (*.arc, *.szs);;All files (*)")
+            "Generator files (*.txt);;Archived files (*.arc;*.szs);;All files (*)")
         if filepath:
-            if choosentype == "Archived files (*.arc, *.szs)" or filepath.endswith(".arc") or filepath.endswith(".szs"):
+            if choosentype == "Archived files (*.arc;*.szs)" or filepath.endswith(".arc") or filepath.endswith(".szs"):
                 if self.loaded_archive is None or self.loaded_archive_file is None:
                     raise RuntimeError("No archive loaded!")
                 else:
@@ -525,7 +552,10 @@ class GenEditor(QMainWindow):
             filepath, choosentype = QFileDialog.getOpenFileName(
                 self, "Open File",
                 self.pathsconfig["collision"],
-                "Pikmin 3 Archive (*.szs);;Pikmin 3 Map Collision (*.bjmp);;All files (*)")
+                    "Supported files (*.szs;*.bjmp);;" + 
+                    "Pikmin 3 Archive (*.szs);;" + 
+                    "Pikmin 3 Map Collision (*.bjmp);;" + 
+                    "All files (*)")
             if filepath:
                 if choosentype == "Pikmin 3 Archive (*.szs)" or filepath.endswith(".szs"):
                     with open(filepath, "rb") as f:
